@@ -10,7 +10,13 @@ const createConnectHandler = (error, serverRenderer) => (req, res, next) => {
     if (error) {
         return next(error);
     }
-    serverRenderer(req, res, next);
+
+    if (serverRenderer instanceof Promise) {
+        serverRenderer.then(server => server(req, res, next)).catch(next);
+    }
+    else {
+        serverRenderer(req, res, next)
+    }
 };
 
 const createKoaHandler = (error, serverRenderer) => (ctx, next) => {
@@ -69,7 +75,7 @@ function getServerRenderer(filename, buffer, options) {
     }
 
     serverRenderer = serverRenderer(options);
-    if (typeof serverRenderer !== 'function') {
+    if (typeof serverRenderer !== 'function' && !(serverRenderer instanceof Promise)) {
         throw new Error(errMessage);
     }
 
